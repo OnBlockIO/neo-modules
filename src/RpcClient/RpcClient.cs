@@ -30,11 +30,11 @@ namespace Neo.Network.RPC
     /// <summary>
     /// The RPC client to call NEO RPC methods
     /// </summary>
-    public class RpcClient : IDisposable
+    public class RpcClient : IDisposable, IRpcClient
     {
         private readonly HttpClient httpClient;
         private readonly Uri baseAddress;
-        internal readonly ProtocolSettings protocolSettings;
+        public ProtocolSettings ProtocolSettings { get; init; }
 
         public RpcClient(Uri url, string rpcUser = default, string rpcPass = default, ProtocolSettings protocolSettings = null)
         {
@@ -45,14 +45,14 @@ namespace Neo.Network.RPC
                 string token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{rpcUser}:{rpcPass}"));
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", token);
             }
-            this.protocolSettings = protocolSettings ?? ProtocolSettings.Default;
+            this.ProtocolSettings = protocolSettings ?? ProtocolSettings.Default;
         }
 
         public RpcClient(HttpClient client, Uri url, ProtocolSettings protocolSettings = null)
         {
             httpClient = client;
             baseAddress = url;
-            this.protocolSettings = protocolSettings ?? ProtocolSettings.Default;
+            this.ProtocolSettings = protocolSettings ?? ProtocolSettings.Default;
         }
 
         #region IDisposable Support
@@ -191,7 +191,7 @@ namespace Neo.Network.RPC
                 ? await RpcSendAsync(GetRpcName(), index, true).ConfigureAwait(false)
                 : await RpcSendAsync(GetRpcName(), hashOrIndex, true).ConfigureAwait(false);
 
-            return RpcBlock.FromJson(result, protocolSettings);
+            return RpcBlock.FromJson(result, ProtocolSettings);
         }
 
         /// <summary>
@@ -241,7 +241,7 @@ namespace Neo.Network.RPC
                 ? await RpcSendAsync(GetRpcName(), index, true).ConfigureAwait(false)
                 : await RpcSendAsync(GetRpcName(), hashOrIndex, true).ConfigureAwait(false);
 
-            return RpcBlockHeader.FromJson(result, protocolSettings);
+            return RpcBlockHeader.FromJson(result, ProtocolSettings);
         }
 
         /// <summary>
@@ -309,7 +309,7 @@ namespace Neo.Network.RPC
         public async Task<RpcTransaction> GetRawTransactionAsync(string txHash)
         {
             var result = await RpcSendAsync(GetRpcName(), txHash, true).ConfigureAwait(false);
-            return RpcTransaction.FromJson(result, protocolSettings);
+            return RpcTransaction.FromJson(result, ProtocolSettings);
         }
 
         /// <summary>
@@ -583,7 +583,7 @@ namespace Neo.Network.RPC
             {
                 parameters.Add(fromAddress.AsScriptHash());
             }
-            parameters.Add(outputs.Select(p => p.ToJson(protocolSettings)).ToArray());
+            parameters.Add(outputs.Select(p => p.ToJson(ProtocolSettings)).ToArray());
 
             return await RpcSendAsync(GetRpcName(), paraArgs: parameters.ToArray()).ConfigureAwait(false);
         }
@@ -609,7 +609,7 @@ namespace Neo.Network.RPC
         public async Task<RpcApplicationLog> GetApplicationLogAsync(string txHash)
         {
             var result = await RpcSendAsync(GetRpcName(), txHash).ConfigureAwait(false);
-            return RpcApplicationLog.FromJson(result, protocolSettings);
+            return RpcApplicationLog.FromJson(result, ProtocolSettings);
         }
 
         /// <summary>
@@ -619,7 +619,7 @@ namespace Neo.Network.RPC
         public async Task<RpcApplicationLog> GetApplicationLogAsync(string txHash, TriggerType triggerType)
         {
             var result = await RpcSendAsync(GetRpcName(), txHash, triggerType).ConfigureAwait(false);
-            return RpcApplicationLog.FromJson(result, protocolSettings);
+            return RpcApplicationLog.FromJson(result, ProtocolSettings);
         }
 
         /// <summary>
@@ -635,7 +635,7 @@ namespace Neo.Network.RPC
             endTimestamp ??= DateTime.UtcNow.ToTimestampMS();
             var result = await RpcSendAsync(GetRpcName(), address.AsScriptHash(), startTimestamp, endTimestamp)
                 .ConfigureAwait(false);
-            return RpcNep17Transfers.FromJson(result, protocolSettings);
+            return RpcNep17Transfers.FromJson(result, ProtocolSettings);
         }
 
         /// <summary>
@@ -646,7 +646,7 @@ namespace Neo.Network.RPC
         {
             var result = await RpcSendAsync(GetRpcName(), address.AsScriptHash())
                 .ConfigureAwait(false);
-            return RpcNep17Balances.FromJson(result, protocolSettings);
+            return RpcNep17Balances.FromJson(result, ProtocolSettings);
         }
 
         #endregion Plugins

@@ -36,7 +36,7 @@ namespace Neo.Network.RPC.Tests
         public void TestRpcApplicationLog()
         {
             JObject json = TestUtils.RpcTestCases.Find(p => p.Name == nameof(RpcClient.GetApplicationLogAsync).ToLower()).Response.Result;
-            var item = RpcApplicationLog.FromJson(json, rpc.protocolSettings);
+            var item = RpcApplicationLog.FromJson(json, rpc.ProtocolSettings);
             Assert.AreEqual(json.ToString(), item.ToJson().ToString());
         }
 
@@ -44,16 +44,16 @@ namespace Neo.Network.RPC.Tests
         public void TestRpcBlock()
         {
             JObject json = TestUtils.RpcTestCases.Find(p => p.Name == nameof(RpcClient.GetBlockAsync).ToLower()).Response.Result;
-            var item = RpcBlock.FromJson(json, rpc.protocolSettings);
-            Assert.AreEqual(json.ToString(), item.ToJson(rpc.protocolSettings).ToString());
+            var item = RpcBlock.FromJson(json, rpc.ProtocolSettings);
+            Assert.AreEqual(json.ToString(), item.ToJson(rpc.ProtocolSettings).ToString());
         }
 
         [TestMethod()]
         public void TestRpcBlockHeader()
         {
             JObject json = TestUtils.RpcTestCases.Find(p => p.Name == nameof(RpcClient.GetBlockHeaderAsync).ToLower()).Response.Result;
-            var item = RpcBlockHeader.FromJson(json, rpc.protocolSettings);
-            Assert.AreEqual(json.ToString(), item.ToJson(rpc.protocolSettings).ToString());
+            var item = RpcBlockHeader.FromJson(json, rpc.ProtocolSettings);
+            Assert.AreEqual(json.ToString(), item.ToJson(rpc.ProtocolSettings).ToString());
         }
 
         [TestMethod()]
@@ -85,16 +85,16 @@ namespace Neo.Network.RPC.Tests
         public void TestRpcNep17Balances()
         {
             JObject json = TestUtils.RpcTestCases.Find(p => p.Name == nameof(RpcClient.GetNep17BalancesAsync).ToLower()).Response.Result;
-            var item = RpcNep17Balances.FromJson(json, rpc.protocolSettings);
-            Assert.AreEqual(json.ToString(), item.ToJson(rpc.protocolSettings).ToString());
+            var item = RpcNep17Balances.FromJson(json, rpc.ProtocolSettings);
+            Assert.AreEqual(json.ToString(), item.ToJson(rpc.ProtocolSettings).ToString());
         }
 
         [TestMethod()]
         public void TestRpcNep17Transfers()
         {
             JObject json = TestUtils.RpcTestCases.Find(p => p.Name == nameof(RpcClient.GetNep17TransfersAsync).ToLower()).Response.Result;
-            var item = RpcNep17Transfers.FromJson(json, rpc.protocolSettings);
-            Assert.AreEqual(json.ToString(), item.ToJson(rpc.protocolSettings).ToString());
+            var item = RpcNep17Transfers.FromJson(json, rpc.ProtocolSettings);
+            Assert.AreEqual(json.ToString(), item.ToJson(rpc.ProtocolSettings).ToString());
         }
 
         [TestMethod()]
@@ -125,16 +125,16 @@ namespace Neo.Network.RPC.Tests
         public void TestRpcTransaction()
         {
             JObject json = TestUtils.RpcTestCases.Find(p => p.Name == nameof(RpcClient.GetRawTransactionAsync).ToLower()).Response.Result;
-            var item = RpcTransaction.FromJson(json, rpc.protocolSettings);
-            Assert.AreEqual(json.ToString(), item.ToJson(rpc.protocolSettings).ToString());
+            var item = RpcTransaction.FromJson(json, rpc.ProtocolSettings);
+            Assert.AreEqual(json.ToString(), item.ToJson(rpc.ProtocolSettings).ToString());
         }
 
         [TestMethod()]
         public void TestRpcTransferOut()
         {
             JObject json = TestUtils.RpcTestCases.Find(p => p.Name == nameof(RpcClient.SendManyAsync).ToLower()).Request.Params[1];
-            var item = ((JArray)json).Select(p => RpcTransferOut.FromJson(p, rpc.protocolSettings));
-            Assert.AreEqual(json.ToString(), ((JArray)item.Select(p => p.ToJson(rpc.protocolSettings)).ToArray()).ToString());
+            var item = ((JArray)json).Select(p => RpcTransferOut.FromJson(p, rpc.ProtocolSettings));
+            Assert.AreEqual(json.ToString(), ((JArray)item.Select(p => p.ToJson(rpc.ProtocolSettings)).ToArray()).ToString());
         }
 
         [TestMethod()]

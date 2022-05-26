@@ -17,13 +17,13 @@ namespace Neo.Network.RPC
 {
     public class TransactionManagerFactory
     {
-        private readonly RpcClient rpcClient;
+        private readonly IRpcClient rpcClient;
 
         /// <summary>
         /// TransactionManagerFactory Constructor
         /// </summary>
         /// <param name="rpcClient">the RPC client to call NEO RPC API</param>
-        public TransactionManagerFactory(RpcClient rpcClient)
+        public TransactionManagerFactory(IRpcClient rpcClient)
         {
             this.rpcClient = rpcClient;
         }
@@ -50,7 +50,7 @@ namespace Neo.Network.RPC
                 Nonce = (uint)new Random().Next(),
                 Script = script,
                 Signers = signers ?? Array.Empty<Signer>(),
-                ValidUntilBlock = blockCount - 1 + rpcClient.protocolSettings.MaxValidUntilBlockIncrement,
+                ValidUntilBlock = blockCount - 1 + rpcClient.ProtocolSettings.MaxValidUntilBlockIncrement,
                 SystemFee = systemFee,
                 Attributes = attributes ?? Array.Empty<TransactionAttribute>(),
             };

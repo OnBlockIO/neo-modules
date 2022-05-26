@@ -31,7 +31,7 @@ namespace Neo.Network.RPC
         /// Nep17API Constructor
         /// </summary>
         /// <param name="rpcClient">the RPC client to call NEO RPC methods</param>
-        public Nep17API(RpcClient rpcClient) : base(rpcClient) { }
+        public Nep17API(IRpcClient rpcClient) : base(rpcClient) { }
 
         /// <summary>
         /// Get balance of NEP17 token

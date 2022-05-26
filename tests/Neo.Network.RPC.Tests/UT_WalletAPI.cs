@@ -32,7 +32,7 @@ namespace Neo.Network.RPC.Tests
             multiSender = Contract.CreateMultiSigContract(1, new ECPoint[] { keyPair1.PublicKey }).ScriptHash;
             rpcClientMock = UT_TransactionManager.MockRpcClient(sender, new byte[0]);
             client = rpcClientMock.Object;
-            address1 = Wallets.Helper.ToAddress(sender, client.protocolSettings.AddressVersion);
+            address1 = Wallets.Helper.ToAddress(sender, client.ProtocolSettings.AddressVersion);
             walletAPI = new WalletAPI(rpcClientMock.Object);
         }
 
@@ -106,7 +106,7 @@ namespace Neo.Network.RPC.Tests
             json["hash"] = UInt256.Zero.ToString();
             rpcClientMock.Setup(p => p.RpcSendAsync("sendrawtransaction", It.IsAny<JObject>())).ReturnsAsync(json);
 
-            var tranaction = await walletAPI.TransferAsync(NativeContract.GAS.Hash.ToString(), keyPair1.Export(), UInt160.Zero.ToAddress(client.protocolSettings.AddressVersion), 100);
+            var tranaction = await walletAPI.TransferAsync(NativeContract.GAS.Hash.ToString(), keyPair1.Export(), UInt160.Zero.ToAddress(client.ProtocolSettings.AddressVersion), 100);
             Assert.AreEqual(testScript.ToHexString(), tranaction.Script.ToHexString());
         }
 
@@ -153,7 +153,7 @@ namespace Neo.Network.RPC.Tests
         {
             Transaction transaction = TestUtils.GetTransaction();
             rpcClientMock.Setup(p => p.RpcSendAsync("getrawtransaction", It.Is<JObject[]>(j => j[0].AsString() == transaction.Hash.ToString())))
-                .ReturnsAsync(new RpcTransaction { Transaction = transaction, VMState = VMState.HALT, BlockHash = UInt256.Zero, BlockTime = 100, Confirmations = 1 }.ToJson(client.protocolSettings));
+                .ReturnsAsync(new RpcTransaction { Transaction = transaction, VMState = VMState.HALT, BlockHash = UInt256.Zero, BlockTime = 100, Confirmations = 1 }.ToJson(client.ProtocolSettings));
 
             var tx = await walletAPI.WaitTransactionAsync(transaction);
             Assert.AreEqual(VMState.HALT, tx.VMState);

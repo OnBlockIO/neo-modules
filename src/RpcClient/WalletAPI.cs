@@ -47,7 +47,7 @@ namespace Neo.Network.RPC
         /// <returns></returns>
         public Task<decimal> GetUnclaimedGasAsync(string account)
         {
-            UInt160 accountHash = Utility.GetScriptHash(account, rpcClient.protocolSettings);
+            UInt160 accountHash = Utility.GetScriptHash(account, rpcClient.ProtocolSettings);
             return GetUnclaimedGasAsync(accountHash);
         }
 
@@ -98,8 +98,8 @@ namespace Neo.Network.RPC
         /// <returns></returns>
         public Task<BigInteger> GetTokenBalanceAsync(string tokenHash, string account)
         {
-            UInt160 scriptHash = Utility.GetScriptHash(tokenHash, rpcClient.protocolSettings);
-            UInt160 accountHash = Utility.GetScriptHash(account, rpcClient.protocolSettings);
+            UInt160 scriptHash = Utility.GetScriptHash(tokenHash, rpcClient.ProtocolSettings);
+            UInt160 accountHash = Utility.GetScriptHash(account, rpcClient.ProtocolSettings);
             return nep17API.BalanceOfAsync(scriptHash, accountHash);
         }
 
@@ -142,11 +142,11 @@ namespace Neo.Network.RPC
         /// <returns></returns>
         public async Task<Transaction> TransferAsync(string tokenHash, string fromKey, string toAddress, decimal amount, object data = null)
         {
-            UInt160 scriptHash = Utility.GetScriptHash(tokenHash, rpcClient.protocolSettings);
+            UInt160 scriptHash = Utility.GetScriptHash(tokenHash, rpcClient.ProtocolSettings);
             var decimals = await nep17API.DecimalsAsync(scriptHash).ConfigureAwait(false);
 
             KeyPair from = Utility.GetKeyPair(fromKey);
-            UInt160 to = Utility.GetScriptHash(toAddress, rpcClient.protocolSettings);
+            UInt160 to = Utility.GetScriptHash(toAddress, rpcClient.ProtocolSettings);
             BigInteger amountInteger = amount.ToBigInteger(decimals);
             return await TransferAsync(scriptHash, from, to, amountInteger, data).ConfigureAwait(false);
         }
@@ -205,7 +205,7 @@ namespace Neo.Network.RPC
                     rpcTx = await rpcClient.GetRawTransactionAsync(transaction.Hash.ToString()).ConfigureAwait(false);
                     if (rpcTx == null || rpcTx.Confirmations == null)
                     {
-                        await Task.Delay((int)rpcClient.protocolSettings.MillisecondsPerBlock / 2);
+                        await Task.Delay((int)rpcClient.ProtocolSettings.MillisecondsPerBlock / 2);
                     }
                 }
                 catch (Exception) { }

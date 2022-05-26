@@ -28,7 +28,7 @@ namespace Neo.Network.RPC
     {
         private class SignItem { public Contract Contract; public HashSet<KeyPair> KeyPairs; }
 
-        private readonly RpcClient rpcClient;
+        private readonly IRpcClient rpcClient;
 
         /// <summary>
         /// The Transaction context to manage the witnesses
@@ -52,10 +52,10 @@ namespace Neo.Network.RPC
         /// </summary>
         /// <param name="tx">the transaction to manage. Typically buildt</param>
         /// <param name="rpcClient">the RPC client to call NEO RPC API</param>
-        public TransactionManager(Transaction tx, RpcClient rpcClient)
+        public TransactionManager(Transaction tx, IRpcClient rpcClient)
         {
             this.tx = tx;
-            this.context = new ContractParametersContext(null, tx, rpcClient.protocolSettings.Network);
+            this.context = new ContractParametersContext(null, tx, rpcClient.ProtocolSettings.Network);
             this.rpcClient = rpcClient;
         }
 
@@ -174,14 +174,14 @@ namespace Neo.Network.RPC
 
             var gasBalance = await new Nep17API(rpcClient).BalanceOfAsync(NativeContract.GAS.Hash, Tx.Sender).ConfigureAwait(false);
             if (gasBalance < Tx.SystemFee + Tx.NetworkFee)
-                throw new InvalidOperationException($"Insufficient GAS in address: {Tx.Sender.ToAddress(rpcClient.protocolSettings.AddressVersion)}");
+                throw new InvalidOperationException($"Insufficient GAS in address: {Tx.Sender.ToAddress(rpcClient.ProtocolSettings.AddressVersion)}");
 
             // Sign with signStore
             for (int i = 0; i < signStore.Count; i++)
             {
                 foreach (var key in signStore[i].KeyPairs)
                 {
-                    byte[] signature = Tx.Sign(key, rpcClient.protocolSettings.Network);
+                    byte[] signature = Tx.Sign(key, rpcClient.ProtocolSettings.Network);
                     if (!context.AddSignature(signStore[i].Contract, key.PublicKey, signature))
                     {
                         throw new Exception("AddSignature failed!");

@@ -24,13 +24,13 @@ namespace Neo.Network.RPC
     /// </summary>
     public class ContractClient
     {
-        protected readonly RpcClient rpcClient;
+        protected readonly IRpcClient rpcClient;
 
         /// <summary>
         /// ContractClient Constructor
         /// </summary>
         /// <param name="rpc">the RPC client to call NEO RPC methods</param>
-        public ContractClient(RpcClient rpc)
+        public ContractClient(IRpcClient rpc)
         {
             rpcClient = rpc;
         }

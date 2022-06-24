@@ -106,7 +106,7 @@ namespace Neo.Network.RPC.Tests
             json["hash"] = UInt256.Zero.ToString();
             rpcClientMock.Setup(p => p.RpcSendAsync("sendrawtransaction", It.IsAny<JObject>())).ReturnsAsync(json);
 
-            var tranaction = await walletAPI.TransferAsync(NativeContract.GAS.Hash.ToString(), keyPair1.Export(), UInt160.Zero.ToAddress(client.protocolSettings.AddressVersion), 100);
+            var tranaction = await walletAPI.TransferAsync(NativeContract.GAS.Hash.ToString(), keyPair1.Export(), UInt160.Zero.ToAddress(client.ProtocolSettings.AddressVersion), 100);
             Assert.AreEqual(testScript.ToHexString(), tranaction.Script.Span.ToHexString());
         }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Neo.IO.Json;
@@ -155,7 +156,7 @@ public interface IRpcClient
     /// Returns the result after passing a script through the VM.
     /// This RPC call does not affect the blockchain in any way.
     /// </summary>
-    Task<RpcInvokeResult> InvokeScriptAsync(byte[] script, params Signer[] signers);
+    Task<RpcInvokeResult> InvokeScriptAsync(ReadOnlyMemory<byte> script, params Signer[] signers);
 
     Task<RpcUnclaimedGas> GetUnclaimedGasAsync(string address);
 

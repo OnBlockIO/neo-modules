@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 The Neo Project.
+// Copyright (C) 2015-2022 The Neo Project.
 //
 // The Neo.Network.RPC is free software distributed under the MIT software license,
 // see the accompanying file LICENSE in the main directory of the
@@ -13,6 +13,8 @@ using Neo.IO.Json;
 using Neo.Network.P2P.Payloads;
 using Neo.SmartContract;
 using Neo.SmartContract.Native;
+using Neo.VM;
+using Neo.VM.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -192,7 +194,7 @@ namespace Neo.Plugins
                 Key = key
             });
             if (item is null) throw new RpcException(-100, "Unknown storage");
-            return Convert.ToBase64String(item.Value);
+            return Convert.ToBase64String(item.Value.Span);
         }
 
         [RpcMethod]
@@ -209,29 +211,55 @@ namespace Neo.Plugins
         {
             using var snapshot = system.GetSnapshot();
             var validators = NativeContract.NEO.GetNextBlockValidators(snapshot, system.Settings.ValidatorsCount);
-            var candidates = NativeContract.NEO.GetCandidates(snapshot);
-            if (candidates.Length > 0)
+            return validators.Select(p =>
             {
-                return candidates.Select(p =>
-                {
-                    JObject validator = new();
-                    validator["publickey"] = p.PublicKey.ToString();
-                    validator["votes"] = p.Votes.ToString();
-                    validator["active"] = validators.Contains(p.PublicKey);
-                    return validator;
-                }).ToArray();
-            }
-            else
+                JObject validator = new();
+                validator["publickey"] = p.ToString();
+                validator["votes"] = (int)NativeContract.NEO.GetCandidateVote(snapshot, p);
+                return validator;
+            }).ToArray();
+        }
+
+        [RpcMethod]
+        protected virtual JObject GetCandidates(JArray _params)
+        {
+            using var snapshot = system.GetSnapshot();
+            byte[] script;
+            using (ScriptBuilder sb = new())
             {
-                return validators.Select(p =>
-                {
-                    JObject validator = new();
-                    validator["publickey"] = p.ToString();
-                    validator["votes"] = 0;
-                    validator["active"] = true;
-                    return validator;
-                }).ToArray();
+                script = sb.EmitDynamicCall(NativeContract.NEO.Hash, "getCandidates", null).ToArray();
             }
+            using ApplicationEngine engine = ApplicationEngine.Run(script, snapshot, settings: system.Settings, gas: settings.MaxGasInvoke);
+            JObject json = new();
+            try
+            {
+                var resultstack = engine.ResultStack.ToArray();
+                if (resultstack.Length > 0)
+                {
+                    JArray jArray = new();
+                    var validators = NativeContract.NEO.GetNextBlockValidators(snapshot, system.Settings.ValidatorsCount);
+
+                    foreach (var item in resultstack)
+                    {
+                        var value = (VM.Types.Array)item;
+                        foreach (Struct ele in value)
+                        {
+                            var publickey = ele[0].GetSpan().ToHexString();
+                            json["publickey"] = publickey;
+                            json["votes"] = ele[1].GetInteger().ToString();
+                            json["active"] = validators.ToByteArray().ToHexString().Contains(publickey);
+                            jArray.Add(json);
+                            json = new();
+                        }
+                        return jArray;
+                    }
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                json["exception"] = "Invalid result.";
+            }
+            return json;
         }
 
         [RpcMethod]

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 The Neo Project.
+// Copyright (C) 2015-2022 The Neo Project.
 //
 // The Neo.Network.RPC is free software distributed under the MIT software license,
 // see the accompanying file LICENSE in the main directory of the
@@ -18,13 +18,11 @@ using Neo.SmartContract.Native;
 using Neo.VM;
 using Neo.Wallets;
 using Neo.Wallets.NEP6;
-using Neo.Wallets.SQLite;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
-using static System.IO.Path;
 
 namespace Neo.Plugins
 {
@@ -46,6 +44,7 @@ namespace Neo.Plugins
             public override WalletAccount GetAccount(UInt160 scriptHash) => null;
             public override IEnumerable<WalletAccount> GetAccounts() => Array.Empty<WalletAccount>();
             public override bool VerifyPassword(string password) => false;
+            public override void Save() { }
         }
 
         protected Wallet wallet;
@@ -155,38 +154,20 @@ namespace Neo.Plugins
             string path = _params[0].AsString();
             string password = _params[1].AsString();
             if (!File.Exists(path)) throw new FileNotFoundException();
-            switch (GetExtension(path))
-            {
-                case ".db3":
-                    {
-                        wallet = UserWallet.Open(path, password, system.Settings);
-                        break;
-                    }
-                case ".json":
-                    {
-                        NEP6Wallet nep6wallet = new(path, system.Settings);
-                        nep6wallet.Unlock(password);
-                        wallet = nep6wallet;
-                        break;
-                    }
-                default:
-                    throw new NotSupportedException();
-            }
+            wallet = Wallet.Open(path, password, system.Settings)
+                ?? throw new NotSupportedException();
             return true;
         }
 
-        private void ProcessInvokeWithWallet(JObject result, Signers signers = null)
+        private void ProcessInvokeWithWallet(JObject result, Signer[] signers = null)
         {
-            if (wallet == null || signers == null) return;
+            if (wallet == null || signers == null || signers.Length == 0) return;
 
-            Signer[] witnessSigners = signers.GetSigners().ToArray();
-            UInt160 sender = signers.Size > 0 ? signers.GetSigners()[0].Account : null;
-            if (witnessSigners.Length <= 0) return;
-
+            UInt160 sender = signers[0].Account;
             Transaction tx;
             try
             {
-                tx = wallet.MakeTransaction(system.StoreView, Convert.FromBase64String(result["script"].AsString()), sender, witnessSigners, maxGas: settings.MaxGasInvoke);
+                tx = wallet.MakeTransaction(system.StoreView, Convert.FromBase64String(result["script"].AsString()), sender, signers, maxGas: settings.MaxGasInvoke);
             }
             catch (Exception e)
             {
@@ -343,11 +324,12 @@ namespace Neo.Plugins
         {
             UInt160 script_hash = UInt160.Parse(_params[0].AsString());
             ContractParameter[] args = _params.Count >= 2 ? ((JArray)_params[1]).Select(p => ContractParameter.FromJson(p)).ToArray() : Array.Empty<ContractParameter>();
-            Signers signers = _params.Count >= 3 ? SignersFromJson((JArray)_params[2], system.Settings) : null;
-            return GetVerificationResult(script_hash, args, signers);
+            Signer[] signers = _params.Count >= 3 ? SignersFromJson((JArray)_params[2], system.Settings) : null;
+            Witness[] witnesses = _params.Count >= 3 ? WitnessesFromJson((JArray)_params[2]) : null;
+            return GetVerificationResult(script_hash, args, signers, witnesses);
         }
 
-        private JObject GetVerificationResult(UInt160 scriptHash, ContractParameter[] args, Signers signers = null)
+        private JObject GetVerificationResult(UInt160 scriptHash, ContractParameter[] args, Signer[] signers = null, Witness[] witnesses = null)
         {
             using var snapshot = system.GetSnapshot();
             var contract = NativeContract.ContractManagement.GetContract(snapshot, scriptHash);
@@ -363,9 +345,9 @@ namespace Neo.Plugins
 
             Transaction tx = new()
             {
-                Signers = signers == null ? new Signer[] { new() { Account = scriptHash } } : signers.GetSigners(),
+                Signers = signers ?? new Signer[] { new() { Account = scriptHash } },
                 Attributes = Array.Empty<TransactionAttribute>(),
-                Witnesses = signers?.Witnesses,
+                Witnesses = witnesses,
                 Script = new[] { (byte)OpCode.RET }
             };
             using ApplicationEngine engine = ApplicationEngine.Create(TriggerType.Verification, tx, snapshot.CreateSnapshot(), settings: system.Settings);
